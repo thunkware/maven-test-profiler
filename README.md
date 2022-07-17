@@ -14,9 +14,9 @@ Define the following `.mvn/extensions.xml` file:
 <extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.0.0 http://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
   <extension>
-    <groupId>com.soebes.maven.extensions.profiler.test</groupId>
+    <groupId>io.github.thunkware</groupId>
     <artifactId>test-profiler</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </extension>
 </extensions>
 ```
@@ -36,24 +36,6 @@ mvn clean install
 [INFO] SUREFIRE UNIT TEST SUMMARY
 [INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
 [INFO]                                          (sec)
-[INFO]         9        0      0       0        0.013 com.soebes.supose.config.filter.FilterFileTest
-[INFO]         1        0      0       0        0.000 com.soebes.supose.config.filter.FilterPartialTest
-[INFO]         6        0      0       0        0.003 com.soebes.supose.config.filter.FilteringTest
-[INFO]        17        0      0       0        0.017 com.soebes.supose.config.filter.FilteringWithExcludeDifferentRepositoryIdTest
-[INFO]        15        0      0       0        0.018 com.soebes.supose.config.filter.FilteringWithExcludeTest
-[INFO]         3        0      0       0        0.000 com.soebes.supose.core.config.ConfigurationRepositoriesTest
-[INFO]         7        0      0       0        0.017 com.soebes.supose.core.lucene.LuceneTest
-[INFO]         3        0      0       0        0.018 com.soebes.supose.core.scan.IndexMergeTest
-[INFO]         1        0      0       0        0.000 com.soebes.supose.core.utility.FileExtensionPropertyTest
-[INFO]         1        0      0       0        0.028 com.soebes.supose.core.parse.java.JavaParserTest
-[INFO]        11        1      0       0        0.005 com.soebes.supose.core.utility.FileNameTest
-[INFO]         1        0      0       0        0.020 com.soebes.supose.core.recognition.RenameRecognitionTest
-[INFO]        28        0      0       0        0.086 com.soebes.supose.core.scan.SearchRepositoryGetQueryTest
-[INFO]         3        0      0       0        0.021 com.soebes.supose.core.config.ini.IniTest
-[INFO]         1        0      0       0        0.035 com.soebes.supose.core.recognition.TagBranchRecognitionTest
-[INFO]        38        0      0       0        0.115 com.soebes.supose.core.scan.SearchRepositoryGetResultTest
-[INFO]         1        0      0       0        0.003 com.soebes.supose.core.config.RepositoryJobConfigurationTest
-[INFO]        22        0      0       0        0.129 com.soebes.supose.cli.SuposeCLITest
 [INFO] --------- -------- ------ ------- ------------
 [INFO]       168        1      0       0        0.528
 [INFO] ========= ======== ====== ======= ============
@@ -74,7 +56,6 @@ mvn clean install
 [INFO] FAILSAFE UNIT TEST SUMMARY
 [INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
 [INFO]                                          (sec)
-       ...
 [INFO] --------- -------- ------ ------- ------------
 [INFO]       123        1      0       0        0.528
 [INFO] ========= ======== ====== ======= ============
@@ -93,7 +74,7 @@ Prerequisites: Maven 3.6.x+ and Java 1.8+ as runtime.
 
 ## Configuration
 
-The extension can be configured with a `.mvn/jvm.config` file. For example, to customize it:
+The extension can be configured with a `.mvn/jvm.config` file. For example, to customize it, the content could be:
 
 ```
 -Dtest-profiler.maxSlowestSurefireResults=20
@@ -116,20 +97,20 @@ The following properties are available:
 
 - test-profiler.maxSurefireResults
   - max number of surefire results to show
-  - default: INT_MAX
+  - default: 0
 
 - test-profiler.maxFailsafeResults
   - max number of failsafe results to show
-  - default: INT_MAX
+  - default: 0
 
 - test-profiler.maxSlowestSurefireResults
   - max number of slowest surefire results to show
-  - default: 5
+  - default: INT_MAX
 
 - test-profiler.maxSlowestFailsafeResults
   - max number of slowest failsafe results to show
-  - default: 5
+  - default: INT_MAX
 
-- test-profiler.showFailures
-  - whether to show test failures
-  - default: false
+- test-profiler.maxFailures
+  - max number of failures to show
+  - default: 0
