@@ -8,7 +8,7 @@
     <version>1.0.0</version>
   </parent>
 
-  <groupId>com.soebes.maven.extensions.profiler.test</groupId>
+  <groupId>io.github.thunkware</groupId>
   <artifactId>test-profiler</artifactId>
   <version>0.1.1-SNAPSHOT</version>
 
@@ -22,16 +22,16 @@
   </properties>
 
   <scm>
-    <developerConnection>scm:git:git@github.com:khmarbaise/maven-test-profiler.git</developerConnection>
-    <connection>scm:git:git://github.com/khmarbaise/maven-test-profiler.git</connection>
-    <url>http://khmarbaise.github.com/maven-test-profiler/</url>
+    <developerConnection>scm:git:git@github.com:thunkware/maven-test-profiler.git</developerConnection>
+    <connection>scm:git:git://github.com/thunkware/maven-test-profiler.git</connection>
+    <url>http://github.com/thunkware/maven-test-profiler</url>
     <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
     <site>
       <id>github</id>
-      <url>scm:git:git@github.com:khmarbaise/test-profiler.git</url>
+      <url>scm:git:git@github.com:thunkware/test-profiler.git</url>
     </site>
   </distributionManagement>
 
@@ -60,11 +60,7 @@
     <dependency>
       <groupId>org.apache.maven.surefire</groupId>
       <artifactId>surefire-report-parser</artifactId>
-<<<<<<< HEAD
-      <version>2.17</version>
-=======
       <version>3.0.0-M7</version>
->>>>>>> 9cb003b (add various enhancements and fixes)
     </dependency>
   </dependencies>
 
