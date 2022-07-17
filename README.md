@@ -4,26 +4,15 @@ Often you have the problem that in large builds you need to find
 the list of the `bad tests` which means to find those tests
 which are taking the most time to run.
 
-This is an [EventSpy][1] implementation which collects all the information
-of all unit tests which have been ran by maven-surefire-plugin
-and make a summarization output at the end of the build.
+This maven extension outputs summary of all tests ran by
+maven-surefire-plugin and maven-failsafe-plugin.
 This means every suite is listed separately with their approriate 
 run time afterwards you get a list of the worst five test suites
 which gives you a hint where to look for bad tests.
 
-In case of test failures you will get appropriate lines at the end of the
-build (WARNINGS).
+## Usage
 
-If you like to use this EventSpy you need to put the resulting jar
-file of this project into the `${M2_HOME}/lib/ext` directory.
-
-The jar file with the classifier `-mvn325` is intended to be used with
-Maven 3.1.1 up to and including Maven 3.2.5.
-
-You can find the artifacts in [Maven Central](https://repo1.maven.org/maven2/com/soebes/maven/extensions/profiler/test/test-profiler/0.1.0/).
-
-If you like to use this extension in relationship with Maven 3.3.1 you
-have to define the following `.mvn/extensions.xml` file:
+Define the following `.mvn/extensions.xml` file:
 
 ``` xml
 <extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -36,11 +25,10 @@ have to define the following `.mvn/extensions.xml` file:
 </extensions>
 ```
 
-The download from Maven Central will be done by Maven itself.
-
 Here's an example of what the output will look like:
 
 ```
+mvn clean install
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
@@ -48,7 +36,8 @@ Here's an example of what the output will look like:
 [INFO] Finished at: Mon Feb 16 21:08:08 CET 2015
 [INFO] Final Memory: 56M/654M
 [INFO] ------------------------------------------------------------------------
-[INFO] UNIT TEST SUMMARY
+[INFO]
+[INFO] SUREFIRE UNIT TEST SUMMARY
 [INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
 [INFO]                                          (sec)
 [INFO]         9        0      0       0        0.013 com.soebes.supose.config.filter.FilterFileTest
@@ -74,8 +63,9 @@ Here's an example of what the output will look like:
 [INFO] ========= ======== ====== ======= ============
 [INFO]
 [INFO] Rate: 99.405 %
+[INFO] Average Time per Test: 0.024000
 [INFO] ------------------------------------------------------------------------
-[INFO] SLOWEST UNIT TEST SUMMARY
+[INFO] SUREFIRE SLOWEST UNIT TEST SUMMARY
 [INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
 [INFO]                                          (sec)
 [INFO]        22        0      0       0        0.129 com.soebes.supose.cli.SuposeCLITest
@@ -83,10 +73,67 @@ Here's an example of what the output will look like:
 [INFO]        28        0      0       0        0.086 com.soebes.supose.core.scan.SearchRepositoryGetQueryTest
 [INFO]         1        0      0       0        0.035 com.soebes.supose.core.recognition.TagBranchRecognitionTest
 [INFO]         1        0      0       0        0.028 com.soebes.supose.core.parse.java.JavaParserTest
-[WARNING] Failed Test case: testF70(com.soebes.supose.core.utility.FileNameTest)
-[WARNING]        The path is not as expected. expected [&&] but found [/] java.lang.AssertionError
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] FAILSAFE UNIT TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
+[INFO]                                          (sec)
+       ...
+[INFO] --------- -------- ------ ------- ------------
+[INFO]       123        1      0       0        0.528
+[INFO] ========= ======== ====== ======= ============
+[INFO]
+[INFO] Rate: 98.405 %
+[INFO] Average Time per Test: 0.023000
+[INFO] ------------------------------------------------------------------------
+[INFO] FAILSAFE SLOWEST UNIT TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed Time ClassName
+[INFO]                                          (sec)
+       ...
+[INFO] ------------------------------------------------------------------------
 ```
 
-Prerequisites minimum for this is Maven 3.1.1 and Java 1.6 as run time.
+Prerequisites: Maven 3.6.x+ and Java 1.8+ as runtime.
 
-[1]: http://maven.apache.org/ref/3.0.3/maven-core/apidocs/org/apache/maven/eventspy/AbstractEventSpy.html
+## Configuration
+
+The extension can be configured with a `.mvn/jvm.config` file. For example, to customize it:
+
+```
+-Dtest-profiler.maxSlowestSurefireResults=20
+-Dtest-profiler.maxSlowestFailsafeResults=30
+```
+
+The following properties are available:
+
+- test-profiler.enabled
+  - enables or disables the extension
+  - default: true
+
+- test-profiler.surefireReportsDirectory
+  - location of surefire reports directory
+  - default: surefire-reports
+
+- test-profiler.failsafeReportsDirectory
+  - location of failsafe reports directory
+  - default: failsafe-reports
+
+- test-profiler.maxSurefireResults
+  - max number of surefire results to display
+  - default: INT_MAX
+
+- test-profiler.maxFailsafeResults
+  - max number of failsafe results to display
+  - default: INT_MAX
+
+- test-profiler.maxSlowestSurefireResults
+  - max number of slowest surefire results to display
+  - default: 5
+
+- test-profiler.maxSlowestFailsafeResults
+  - max number of slowest failsafe results to display
+  - default: 5
+
+- test-profiler.displayFailures
+  - whether to display failures
+  - default: false

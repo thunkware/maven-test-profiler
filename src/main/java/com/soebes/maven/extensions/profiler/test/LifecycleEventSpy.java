@@ -2,6 +2,8 @@ package com.soebes.maven.extensions.profiler.test;
 
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.apache.maven.execution.MavenExecutionResult;
+import org.apache.maven.plugin.surefire.log.api.ConsoleLogger;
+import org.apache.maven.plugin.surefire.log.api.ConsoleLoggerDecorator;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
 import org.apache.maven.plugins.surefire.report.ReportTestSuite;
 import org.apache.maven.plugins.surefire.report.SurefireReportParser;
@@ -14,6 +16,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,8 +30,35 @@ import java.util.Map;
 @Named
 @Singleton
 public class LifecycleEventSpy extends AbstractEventSpy {
+    private static final String VERSION = "0.1.2";
+
+    private static final boolean DEFAULT_ENABLED = true;
+
+    private static final String DEFAULT_SUREFIRE_REPORTS_DIRECTORY = "surefire-reports";
+    private static final String DEFAULT_FAILSAFE_REPORTS_DIRECTORY = "failsafe-reports";
+
+    private static final int DEFAULT_MAX_SUREFIRE_RESULTS = Integer.MAX_VALUE;
+    private static final int DEFAULT_MAX_FAILSAFE_RESULTS = Integer.MAX_VALUE;
+
+    private static final int DEFAULT_MAX_SLOWEST_SUREFIRE_RESULTS = 5;
+    private static final int DEFAULT_MAX_SLOWEST_FAILSAFE_RESULTS = 5;
+
+    private static final boolean DEFAULT_SHOW_FAILURES = false;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private boolean enabled = DEFAULT_ENABLED;
+    
+    private String surefireReportsDirectory = DEFAULT_SUREFIRE_REPORTS_DIRECTORY;
+    private String failsafeReportsDirectory = DEFAULT_FAILSAFE_REPORTS_DIRECTORY;
+    
+    private int maxSurefireResults = DEFAULT_MAX_SUREFIRE_RESULTS;
+    private int maxFailsafeResults = DEFAULT_MAX_FAILSAFE_RESULTS;
+
+    private int maxSlowestSurefireResults = DEFAULT_MAX_SLOWEST_SUREFIRE_RESULTS;
+    private int maxSlowestFailsafeResults = DEFAULT_MAX_SLOWEST_FAILSAFE_RESULTS;
+    
+    private boolean showFailures = DEFAULT_SHOW_FAILURES;
 
     public LifecycleEventSpy() {
         logger.debug("LifeCycleProfiler ctor called.");
@@ -36,17 +66,47 @@ public class LifecycleEventSpy extends AbstractEventSpy {
 
     @Override
     public void init(Context context) throws Exception {
-        logger.info("Maven Test Profiler 0.1.0 started.");
+        enabled = Boolean.parseBoolean(getProperty(context, "test-profiler.enabled", DEFAULT_ENABLED + ""));
+        if (!enabled) {
+            return;
+        }
+
+        logger.info("Maven Test Profiler " + VERSION + " started.");
+
+        surefireReportsDirectory = getProperty(context, "test-profiler.surefireReportsDirectory", DEFAULT_SUREFIRE_REPORTS_DIRECTORY);
+        failsafeReportsDirectory = getProperty(context, "test-profiler.failsafeReportsDirectory", DEFAULT_FAILSAFE_REPORTS_DIRECTORY);
+
+        maxSurefireResults = Integer.parseInt(getProperty(context, "test-profiler.maxSurefireResults", DEFAULT_MAX_SUREFIRE_RESULTS + ""));
+        maxFailsafeResults = Integer.parseInt(getProperty(context, "test-profiler.maxFailsafeResults", DEFAULT_MAX_FAILSAFE_RESULTS + ""));
+        
+        maxSlowestSurefireResults = Integer.parseInt(getProperty(context, "test-profiler.maxSlowestSurefireResults", DEFAULT_MAX_SLOWEST_SUREFIRE_RESULTS + ""));
+        maxSlowestFailsafeResults = Integer.parseInt(getProperty(context, "test-profiler.maxSlowestFailsafeResults", DEFAULT_MAX_SLOWEST_FAILSAFE_RESULTS + ""));
+
+        showFailures = Boolean.parseBoolean(getProperty(context, "test-profiler.showFailures", DEFAULT_SHOW_FAILURES + ""));
+    }
+
+    private String getProperty(Context context, String key, String defaultValue) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> systemProperties = (Map<String, String>) context.getData().get("systemProperties");
+        String value = System.getProperty(key, defaultValue);
+        if (systemProperties != null) {
+            return systemProperties.getOrDefault(key, value);
+        }
+        return value;
     }
 
     @Override
     public void onEvent(Object event) throws Exception {
+        if (!enabled) {
+            return;
+        }
+
         try {
             if (event instanceof MavenExecutionResult) {
                 executionResultEventHandler((MavenExecutionResult) event);
             }
         } catch (Exception e) {
-            logger.error("Exception", e);
+            logger.warn("Cannot profile test results", e);
         }
     }
 
@@ -56,87 +116,88 @@ public class LifecycleEventSpy extends AbstractEventSpy {
     }
 
     private List<ReportTestSuite> getAllTestReports(File reportDirectory) throws MavenReportException {
-        SurefireReportParser report = new SurefireReportParser();
-        report.setLocale(Locale.ENGLISH);
-        report.setReportsDirectory(reportDirectory);
-        List<ReportTestSuite> parseXMLReportFiles = report.parseXMLReportFiles();
-        return parseXMLReportFiles;
+        List<File> reportsDirectories = Collections.singletonList(reportDirectory);
+        ConsoleLogger consoleLogger = new ConsoleLoggerDecorator(logger);
+        SurefireReportParser report = new SurefireReportParser(reportsDirectories, Locale.ENGLISH, consoleLogger);
+        return report.parseXMLReportFiles();
     }
 
-    private void executionResultEventHandler(MavenExecutionResult event) throws MavenReportException {
-        List<ReportTestSuite> unitTestsResults = new ArrayList<ReportTestSuite>();
+    private void executionResultEventHandler(MavenExecutionResult event)
+            throws MavenReportException {
+        List<ReportTestSuite> surefireTestsResults = new ArrayList<>();
+        List<ReportTestSuite> failsafeTestsResults = new ArrayList<>();
 
         for (MavenProject project : event.getTopologicallySortedProjects()) {
-            // TODO: Check if we need to make this configurable? But how?
-            // TODO: Can we somehow get the configuration of maven-surefire-plugin if the
-            // location has been changed?
-            File reportDirectory = new File(project.getBuild().getDirectory(), "surefire-reports");
-            if (!reportDirectory.exists()) {
-                continue;
-            }
-
-            unitTestsResults.addAll(getAllTestReports(reportDirectory));
+            collectTestsResults(surefireTestsResults, project, surefireReportsDirectory, maxSurefireResults);
+            collectTestsResults(failsafeTestsResults, project, failsafeReportsDirectory, maxFailsafeResults);
         }
 
-        if (!unitTestsResults.isEmpty()) {
-            unitTestSummary(unitTestsResults);
-        }
-
+        printTestSummary(surefireTestsResults, "SUREFIRE TEST SUMMARY", maxSlowestSurefireResults);
+        printTestSummary(failsafeTestsResults, "FAILSAFE TEST SUMMARY", maxSlowestFailsafeResults);
     }
 
-    private void unitTestSummary(List<ReportTestSuite> unitTestsResults) {
-        logger.info("UNIT TEST SUMMARY");
+    private void collectTestsResults(List<ReportTestSuite> testsResults, MavenProject project, String dir, int max) throws MavenReportException {
+        if (testsResults.size() == max) {
+            return;
+        }
 
-        printResult(unitTestsResults);
+        File reportDirectory = new File(project.getBuild().getDirectory(), dir);
+        if (!reportDirectory.exists()) {
+            return;
+        }
 
-        printSummary(unitTestsResults);
+        testsResults.addAll(getAllTestReports(reportDirectory));
+    }
 
-        sortLongestTestTimeFirst(unitTestsResults);
+    private void printTestSummary(List<ReportTestSuite> testsResults, String label, int maxWorst) {
+        if (testsResults.isEmpty()) {
+            return;
+        }
 
-        List<ReportTestSuite> worstUnitTests = unitTestsResults.subList(0, Math.min(unitTestsResults.size(), 5));
+        logger.info("");
+        logger.info("");
+        logger.info(label);
+
+        printResult(testsResults);
+
+        printSummary(testsResults);
+
+        sortLongestTestTimeFirst(testsResults);
+
+        List<ReportTestSuite> worstUnitTests = testsResults.subList(0, Math.min(testsResults.size(), maxWorst));
 
         logger.info("------------------------------------------------------------------------");
-        logger.info("SLOWEST UNIT TEST SUMMARY");
+        logger.info("SLOWEST {}", label);
         printResult(worstUnitTests);
 
         // Failure summary ...if some...
-        List<ReportTestCase> testCases = new ArrayList<ReportTestCase>();
-        for (ReportTestSuite reportTestSuite : unitTestsResults) {
+        List<ReportTestCase> testCases = new ArrayList<>();
+        for (ReportTestSuite reportTestSuite : testsResults) {
             testCases.addAll(reportTestSuite.getTestCases());
         }
 
         for (ReportTestCase reportTestCase : testCases) {
-            if ((reportTestCase.getFailure() != null) && !reportTestCase.getFailure().isEmpty()) {
-                Map<String, Object> failure = reportTestCase.getFailure();
-                String message = (String) failure.get("message");
-                String type = (String) failure.get("type");
+            if (reportTestCase.hasFailure() && showFailures) {
+                String message = reportTestCase.getFailureMessage();
+                String type = reportTestCase.getFailureType();
                 // FIXME: Currently i can't access the stack trace output which is in the xml file!!
                 logger.warn("Failed Test case: {}({})", reportTestCase.getName(), reportTestCase.getFullClassName());
                 logger.warn("       {} {}", message, type);
             }
         }
+
+        logger.info("------------------------------------------------------------------------");
     }
 
-    public static Comparator<ReportTestSuite> ELAPSED_TIME_LARGEST_FIRST = new Comparator<ReportTestSuite>() {
-        @Override
-        public int compare(ReportTestSuite o1, ReportTestSuite o2) {
-            if (o1.getTimeElapsed() < o2.getTimeElapsed()) {
-                return +1;
-            } else if (o1.getTimeElapsed() > o2.getTimeElapsed()) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
-    };
+    public static final Comparator<ReportTestSuite> ELAPSED_TIME_LARGEST_FIRST = Comparator.comparing(ReportTestSuite::getTimeElapsed);
 
     private void sortLongestTestTimeFirst(List<ReportTestSuite> unitTestsResults) {
         Collections.sort(unitTestsResults, ELAPSED_TIME_LARGEST_FIRST);
     }
 
     private void printSummary(List<ReportTestSuite> unitTestsResults) {
-        SurefireReportParser report = new SurefireReportParser();
-        report.setLocale(Locale.ENGLISH);
+        List<File> reportsDirectories = Collections.emptyList();
+        SurefireReportParser report = new SurefireReportParser(reportsDirectories, Locale.ENGLISH, new ConsoleLoggerDecorator(logger));
         Map<String, String> summary = report.getSummary(unitTestsResults);
 
         logger.info("--------- -------- ------ ------- ----------");
@@ -145,7 +206,8 @@ public class LifecycleEventSpy extends AbstractEventSpy {
         String totalErrors = summary.get("totalErrors");
         String totalSkipped = summary.get("totalSkipped");
         String totalFailures = summary.get("totalFailures");
-        Float totalElapsedTime = Float.parseFloat(summary.get("totalElapsedTime"));
+        String totalElapsedTime = summary.get("totalElapsedTime");
+        float totalElapsedTimeNumber = parseNumber(report, totalElapsedTime);
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%9s", totalTests));
@@ -156,17 +218,30 @@ public class LifecycleEventSpy extends AbstractEventSpy {
         sb.append(" ");
         sb.append(String.format("%7s", totalSkipped));
         sb.append(" ");
-        sb.append(String.format("%10.3f", totalElapsedTime));
+        sb.append(String.format("%10.3f", totalElapsedTimeNumber));
 
-        logger.info(sb.toString());
+        logger.info("{}", sb);
         logger.info("========= ======== ====== ======= ==========");
 
         logger.info("");
         logger.info("Rate: {} %", summary.get("totalPercentage"));
 
-        Float averageTimePerTest = totalElapsedTime / Float.parseFloat(totalTests);
-        logger.info("Average Time per Test: {}", String.format("%6.6f", averageTimePerTest));
+        float totalTestsNumber = Float.parseFloat(totalTests);
+        float averageTimePerTest = totalTestsNumber == 0
+                ? 0
+                : totalElapsedTimeNumber / totalTestsNumber;
+        if (logger.isInfoEnabled()) {
+            logger.info("Average Time per Test: {}", String.format("%6.6f", averageTimePerTest));
+        }
 
+    }
+
+    private float parseNumber(SurefireReportParser report, String totalElapsedTime) {
+        try {
+            return report.getNumberFormat().parse(totalElapsedTime).floatValue();
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Cannot parse totalElapsedTime: " + totalElapsedTime, e);
+        }
     }
 
     private void printResult(List<ReportTestSuite> unitTestsResults) {
@@ -186,7 +261,7 @@ public class LifecycleEventSpy extends AbstractEventSpy {
 
             sb.append(" ");
             sb.append(testSuite.getFullClassName());
-            logger.info("{}", sb.toString());
+            logger.info("{}", sb);
         }
     }
 

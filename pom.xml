@@ -14,7 +14,7 @@
 
   <name>Test :: Profiler</name>
   <properties>
-    <mavenVersion>3.1.1</mavenVersion>
+    <mavenVersion>3.6.3</mavenVersion>
     <!-- dependency versions -->
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
@@ -60,7 +60,11 @@
     <dependency>
       <groupId>org.apache.maven.surefire</groupId>
       <artifactId>surefire-report-parser</artifactId>
+<<<<<<< HEAD
       <version>2.17</version>
+=======
+      <version>3.0.0-M7</version>
+>>>>>>> 9cb003b (add various enhancements and fixes)
     </dependency>
   </dependencies>
 
@@ -87,6 +91,14 @@
       </plugins>
     </pluginManagement>
     <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.3</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>sisu-maven-plugin</artifactId>
