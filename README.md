@@ -1,14 +1,10 @@
 # Maven Test Profiler
 
-Often you have the problem that in large builds you need to find
-the list of the `bad tests` which means to find those tests
-which are taking the most time to run.
-
 This maven extension outputs summary of all tests ran by
 maven-surefire-plugin and maven-failsafe-plugin.
-This means every suite is listed separately with their approriate 
-run time afterwards you get a list of the worst five test suites
-which gives you a hint where to look for bad tests.
+
+Every test suite is listed separately with their elapsed time.
+Also show is a list of the slowest five test suites.
 
 ## Usage
 
@@ -119,21 +115,21 @@ The following properties are available:
   - default: failsafe-reports
 
 - test-profiler.maxSurefireResults
-  - max number of surefire results to display
+  - max number of surefire results to show
   - default: INT_MAX
 
 - test-profiler.maxFailsafeResults
-  - max number of failsafe results to display
+  - max number of failsafe results to show
   - default: INT_MAX
 
 - test-profiler.maxSlowestSurefireResults
-  - max number of slowest surefire results to display
+  - max number of slowest surefire results to show
   - default: 5
 
 - test-profiler.maxSlowestFailsafeResults
-  - max number of slowest failsafe results to display
+  - max number of slowest failsafe results to show
   - default: 5
 
-- test-profiler.displayFailures
-  - whether to display failures
+- test-profiler.showFailures
+  - whether to show test failures
   - default: false
