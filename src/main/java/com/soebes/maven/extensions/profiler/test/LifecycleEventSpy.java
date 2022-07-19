@@ -34,7 +34,7 @@ import static com.soebes.maven.extensions.profiler.test.LifecycleEventSpy.Defaul
 import static com.soebes.maven.extensions.profiler.test.LifecycleEventSpy.Defaults.SUREFIRE_REPORTS_DIRECTORY;
 
 /**
- * @author Karl Heinz Marbaise <khmarbaise@apache.org>
+ * @author Karl Heinz Marbaise khmarbaise@apache.org
  */
 @Named
 @Singleton
