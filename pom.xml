@@ -10,7 +10,7 @@
 
   <groupId>io.github.thunkware</groupId>
   <artifactId>test-profiler</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
 
   <name>Test :: Profiler</name>
   <properties>
@@ -25,7 +25,7 @@
     <developerConnection>scm:git:git@github.com:thunkware/maven-test-profiler.git</developerConnection>
     <connection>scm:git:git://github.com/thunkware/maven-test-profiler.git</connection>
     <url>http://github.com/thunkware/maven-test-profiler</url>
-    <tag>test-profiler-0.1.1</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
