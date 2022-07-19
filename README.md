@@ -3,8 +3,8 @@
 This maven extension outputs summary of all tests ran by
 maven-surefire-plugin and maven-failsafe-plugin.
 
-Every test suite is listed separately with their elapsed time.
-Also show is a list of the slowest five test suites.
+Every test suite is listed separately with their elapsed time
+in order of slowest to faster.
 
 ## Usage
 
@@ -16,7 +16,7 @@ Define the following `.mvn/extensions.xml` file:
   <extension>
     <groupId>io.github.thunkware</groupId>
     <artifactId>test-profiler</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
   </extension>
 </extensions>
 ```
