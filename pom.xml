@@ -14,7 +14,7 @@
 
   <name>Test :: Profiler</name>
   <properties>
-    <mavenVersion>3.6.3</mavenVersion>
+    <mavenVersion>3.8.6</mavenVersion>
     <!-- dependency versions -->
     <gmaven-plugin.version>1.5</gmaven-plugin.version>
     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
@@ -45,6 +45,16 @@
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
       <version>${mavenVersion}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
