@@ -6,6 +6,9 @@ maven-surefire-plugin and maven-failsafe-plugin.
 Every test suite is listed separately with their elapsed time
 in order of slowest to faster.
 
+This is a fork of https://github.com/khmarbaise/maven-test-profiler with minor enhancements/fixes.
+Credit to [@khmarbaise](https://github.com/khmarbaise) for creating the project.
+
 ## Usage
 
 Define the following `.mvn/extensions.xml` file:
